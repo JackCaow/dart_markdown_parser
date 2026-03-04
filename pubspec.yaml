@@ -1,0 +1,15 @@
+name: dart_markdown_parser
+description: >-
+  A pure Dart markdown parser with AST output. Supports CommonMark, GFM,
+  math formulas, footnotes, and an extensible plugin system.
+  Zero external dependencies.
+version: 0.1.0
+homepage: https://github.com/JackCaow/flutter-smooth-markdown
+repository: https://github.com/JackCaow/flutter-smooth-markdown/tree/main/packages/dart_markdown_parser
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dev_dependencies:
+  test: ^1.24.0
+  lints: ^5.0.0
