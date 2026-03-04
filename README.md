@@ -1,6 +1,20 @@
 # dart_markdown_parser
 
+[![pub package](https://img.shields.io/pub/v/dart_markdown_parser.svg)](https://pub.dev/packages/dart_markdown_parser)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 A pure Dart markdown parser that produces an Abstract Syntax Tree (AST). Zero external dependencies — works everywhere Dart runs: CLI, server, web, and Flutter.
+
+## Installation
+
+```yaml
+dependencies:
+  dart_markdown_parser: ^0.1.1
+```
+
+```bash
+dart pub add dart_markdown_parser
+```
 
 ## Features
 
@@ -88,7 +102,3 @@ if (nodes == null) {
 ## License
 
 MIT License — see [LICENSE](LICENSE) file for details.
-
-## Credits
-
-Extracted from [flutter_smooth_markdown](https://github.com/JackCaow/flutter-smooth-markdown) by JackCaow.
