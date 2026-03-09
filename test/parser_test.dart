@@ -140,6 +140,55 @@ void main() {
       expect(list.items[1].checked, isFalse);
     });
 
+    test('parses nested unordered list', () {
+      final markdown = '''- Item 1
+  - Nested 1.1
+  - Nested 1.2
+- Item 2
+  - Nested 2.1''';
+      final nodes = parser.parse(markdown);
+      expect(nodes, hasLength(1));
+      final list = nodes[0] as ListNode;
+      expect(list.items, hasLength(2));
+
+      // Check first item has nested list
+      final firstItem = list.items[0];
+      expect(firstItem.children.any((n) => n is ListNode), isTrue);
+      final nestedList = firstItem.children.firstWhere((n) => n is ListNode) as ListNode;
+      expect(nestedList.items, hasLength(2));
+    });
+
+    test('parses nested ordered list', () {
+      final markdown = '''1. First
+   1. Nested 1.1
+   2. Nested 1.2
+2. Second''';
+      final nodes = parser.parse(markdown);
+      expect(nodes, hasLength(1));
+      final list = nodes[0] as ListNode;
+      expect(list.ordered, isTrue);
+      expect(list.items, hasLength(2));
+
+      // Check first item has nested list
+      final firstItem = list.items[0];
+      expect(firstItem.children.any((n) => n is ListNode), isTrue);
+    });
+
+    test('parses mixed nested lists', () {
+      final markdown = '''- Unordered
+  1. Ordered nested
+  2. Another ordered
+- Another unordered''';
+      final nodes = parser.parse(markdown);
+      expect(nodes, hasLength(1));
+      final list = nodes[0] as ListNode;
+      expect(list.ordered, isFalse);
+
+      final firstItem = list.items[0];
+      final nestedList = firstItem.children.firstWhere((n) => n is ListNode) as ListNode;
+      expect(nestedList.ordered, isTrue);
+    });
+
     test('parses blockquote', () {
       final nodes = parser.parse('> Quote text');
       expect(nodes, hasLength(1));

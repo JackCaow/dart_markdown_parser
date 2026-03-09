@@ -286,40 +286,51 @@ class BlockParser {
 
   /// Parses a list (ordered or unordered)
   _ParseResult _parseList(List<String> lines, int startIndex) {
-    final firstLine = lines[startIndex].trim();
-    final isOrdered = RegExp(r'^\d+\.').hasMatch(firstLine);
+    final firstLine = lines[startIndex];
+    final baseIndent = _getIndentation(firstLine);
+    final trimmed = firstLine.trim();
+    final isOrdered = RegExp(r'^\d+\.').hasMatch(trimmed);
 
     final items = <ListItemNode>[];
     var i = startIndex;
 
-    // Collect all consecutive list items
+    // Collect all consecutive list items at this level
     while (i < lines.length) {
-      final line = lines[i].trim();
+      final line = lines[i];
+      final indent = _getIndentation(line);
+      final trimmedLine = line.trim();
 
-      if (line.isEmpty) {
+      // Skip empty lines
+      if (trimmedLine.isEmpty) {
         i++;
-        // Check if next line is still a list item
-        if (i < lines.length && _isListItem(lines[i])) {
-          continue;
-        } else {
+        continue;
+      }
+
+      // Stop if indentation is less than base (parent level)
+      if (indent < baseIndent && trimmedLine.isNotEmpty) {
+        break;
+      }
+
+      // Stop if not a list item at this level
+      if (indent == baseIndent && !_isListItem(trimmedLine)) {
+        break;
+      }
+
+      // Parse list item at this level
+      if (indent == baseIndent && _isListItem(trimmedLine)) {
+        // Check if list type matches
+        final lineIsOrdered = RegExp(r'^\d+\.').hasMatch(trimmedLine);
+        if (lineIsOrdered != isOrdered) {
           break;
         }
-      }
 
-      if (!_isListItem(line)) {
-        break;
+        final result = _parseListItemWithContent(lines, i, baseIndent);
+        items.add(result.node as ListItemNode);
+        i += result.linesConsumed;
+      } else {
+        // This shouldn't happen in well-formed markdown
+        i++;
       }
-
-      // Check if list type matches
-      final lineIsOrdered = RegExp(r'^\d+\.').hasMatch(line);
-      if (lineIsOrdered != isOrdered) {
-        break;
-      }
-
-      // Parse list item
-      final item = _parseListItem(line);
-      items.add(item);
-      i++;
     }
 
     final startIndex0 = isOrdered
@@ -343,14 +354,21 @@ class BlockParser {
     return int.tryParse(match.group(1)!) ?? 1;
   }
 
-  /// Parses a single list item
-  ListItemNode _parseListItem(String line) {
+  /// Parses a single list item with its content (including nested lists)
+  _ParseResult _parseListItemWithContent(
+    List<String> lines,
+    int startIndex,
+    int baseIndent,
+  ) {
+    final firstLine = lines[startIndex];
+    final trimmed = firstLine.trim();
+
     // Remove list marker
     String content;
     bool? checked;
 
-    if (RegExp(r'^[-*+]\s+').hasMatch(line)) {
-      content = line.replaceFirst(RegExp(r'^[-*+]\s+'), '');
+    if (RegExp(r'^[-*+]\s+').hasMatch(trimmed)) {
+      content = trimmed.replaceFirst(RegExp(r'^[-*+]\s+'), '');
 
       // Check for task list
       if (content.startsWith('[ ] ')) {
@@ -361,13 +379,81 @@ class BlockParser {
         content = content.substring(4);
       }
     } else {
-      content = line.replaceFirst(RegExp(r'^\d+\.\s+'), '');
+      content = trimmed.replaceFirst(RegExp(r'^\d+\.\s+'), '');
     }
 
-    return ListItemNode(
-      children: [TextNode(content)],
-      checked: checked,
+    // Collect all lines belonging to this list item
+    final contentLines = <String>[content];
+    var i = startIndex + 1;
+
+    // Expected indent for continuation lines (more than base)
+    final continuationIndent = baseIndent + 2;
+
+    while (i < lines.length) {
+      final line = lines[i];
+      final indent = _getIndentation(line);
+      final trimmedLine = line.trim();
+
+      // Empty line might be part of the item
+      if (trimmedLine.isEmpty) {
+        // Check if there's more content after
+        if (i + 1 < lines.length) {
+          final nextIndent = _getIndentation(lines[i + 1]);
+          if (nextIndent >= continuationIndent) {
+            contentLines.add('');
+            i++;
+            continue;
+          }
+        }
+        break;
+      }
+
+      // Stop if we hit a list item at the same level
+      if (indent == baseIndent && _isListItem(trimmedLine)) {
+        break;
+      }
+
+      // Stop if indentation is less than continuation
+      if (indent < continuationIndent) {
+        break;
+      }
+
+      // Add continuation line (remove the continuation indent)
+      final dedented = line.length > continuationIndent
+          ? line.substring(continuationIndent)
+          : trimmedLine;
+      contentLines.add(dedented);
+      i++;
+    }
+
+    // Parse the content (which may include nested lists)
+    final itemContent = contentLines.join('\n').trim();
+    final children = itemContent.isEmpty
+        ? <MarkdownNode>[const TextNode('')]
+        : parse(itemContent);
+
+    return _ParseResult(
+      node: ListItemNode(
+        children: children,
+        checked: checked,
+      ),
+      linesConsumed: i - startIndex,
     );
+  }
+
+  /// Gets the indentation level (number of leading spaces) of a line
+  int _getIndentation(String line) {
+    var count = 0;
+    for (var i = 0; i < line.length; i++) {
+      if (line[i] == ' ') {
+        count++;
+      } else if (line[i] == '\t') {
+        count += 4; // Treat tab as 4 spaces
+      } else {
+        break;
+      }
+    }
+    return count;
   }
 
   /// Checks if a line is a footnote definition

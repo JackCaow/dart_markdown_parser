@@ -1,3 +1,9 @@
+## 0.2.0
+
+- Add support for nested lists (sublists with proper indentation handling).
+- Improve list parsing to handle multi-line list items and nested content.
+- Add comprehensive tests for nested unordered, ordered, and mixed lists.
+
 ## 0.1.1
 
 - Fix repository and homepage URLs in pubspec.yaml.

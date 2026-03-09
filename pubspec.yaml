@@ -1,9 +1,9 @@
 name: dart_markdown_parser
 description: >-
   A pure Dart markdown parser with AST output. Supports CommonMark, GFM,
-  math formulas, footnotes, and an extensible plugin system.
+  math formulas, footnotes, nested lists, and an extensible plugin system.
   Zero external dependencies.
-version: 0.1.1
+version: 0.2.0
 homepage: https://github.com/JackCaow/dart_markdown_parser
 repository: https://github.com/JackCaow/dart_markdown_parser
 

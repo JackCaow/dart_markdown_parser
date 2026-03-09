@@ -18,7 +18,7 @@ dart pub add dart_markdown_parser
 
 ## Features
 
-- **CommonMark + GFM** — headers, paragraphs, lists, code blocks, tables, blockquotes, horizontal rules
+- **CommonMark + GFM** — headers, paragraphs, lists (with nested sublists), code blocks, tables, blockquotes, horizontal rules
 - **Inline formatting** — bold, italic, strikethrough, inline code, links, images
 - **Math formulas** — inline `$...$` and block `$$...$$`
 - **Footnotes** — references `[^1]` and definitions `[^1]: ...`
